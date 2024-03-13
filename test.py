@@ -16,10 +16,11 @@ while True:
     
     # Apply thresholding to remove noise
     th = cv2.threshold(fgmask, 200, 255, cv2.THRESH_BINARY)[1]
+    # th = cv2.adaptiveThreshold(fgmask, 200, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
     
     # Find contours of objects
     contours, hierarchy = cv2.findContours(th, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    
+
     # Loop through detected objects
     for contour in contours:
         # Calculate area of object
@@ -35,7 +36,10 @@ while True:
             
     
     # Display the resulting frame
-    cv2.imshow('Motion detection', frame)
+    # cv2.imshow('Motion detection', frame)
+    # cv2.imshow('Motion detection', cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE))
+    cv2.imshow('Motion detection', cv2.rotate(frame, cv2.ROTATE_90_CLOCKWISE))
+
     
     # Exit loop if 'q' is pressed
     if cv2.waitKey(1) & 0xFF == ord('q'):
