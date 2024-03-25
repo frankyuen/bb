@@ -5,6 +5,7 @@ verify_ssl = true
 
 [packages]
 opencv-python = "*"
+numpy = "*"
 
 [dev-packages]
 

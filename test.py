@@ -6,10 +6,14 @@ cap = cv2.VideoCapture(0)
 # Initialize background subtractor
 fgbg = cv2.createBackgroundSubtractorMOG2()
 
+detect_count = 0
+
 # Loop through frames
 while True:
     # Capture frame-by-frame
     ret, frame = cap.read()
+
+    frame = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
     
     # Apply background subtraction
     fgmask = fgbg.apply(frame)
@@ -33,12 +37,15 @@ while True:
             
             # Draw bounding box around object
             cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
-            
+
+            detect_count += 1
+            print('object detected: {}'.format(detect_count))
+
     
     # Display the resulting frame
-    # cv2.imshow('Motion detection', frame)
+    cv2.imshow('Motion detection', frame)
     # cv2.imshow('Motion detection', cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE))
-    cv2.imshow('Motion detection', cv2.rotate(frame, cv2.ROTATE_90_CLOCKWISE))
+    # cv2.imshow('Motion detection', cv2.rotate(frame, cv2.ROTATE_90_CLOCKWISE))
 
     
     # Exit loop if 'q' is pressed
