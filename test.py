@@ -55,4 +55,3 @@ while True:
 # Release video capture and destroy windows
 cap.release()
 cv2.destroyAllWindows()
-
