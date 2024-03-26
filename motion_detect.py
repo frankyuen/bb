@@ -7,13 +7,14 @@ from time import sleep
 SCAN_INTERVAL_SECS = 10
 ALERT_INTERVAL_SECS = 11
 
-SHOW_UI = True
+# SHOW_UI = True
+SHOW_UI = False
 
-LOOP_PER_SCAN = 100
+LOOP_PER_SCAN = 200
 IGNORE_INITIAL_LOOPS = 40
 
-ROTATE = 270
-COUNT_THRESHOLD = 0.5
+ROTATE = 0
+COUNT_THRESHOLD = 0.1
 
 IMAGE_FOLDER = 'var'
 
@@ -35,7 +36,7 @@ def motion_detect():
     fgbg = cv2.createBackgroundSubtractorMOG2()
 
     raw_count = 0
-    frame = None
+    written = False
 
     # Loop through frames
     for i in range(LOOP_PER_SCAN):
@@ -72,22 +73,21 @@ def motion_detect():
                     
                     # Draw bounding box around object
                     cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
+
+                    if not written:
+                        cv2.imwrite('{}/bb-{}.jpg'.format(IMAGE_FOLDER, datetime.now(timezone.utc).strftime('%Y-%m-%d_%H-%M-%S')), frame)
+                        written = True
         
         # Display the resulting frame
         if SHOW_UI:
             cv2.imshow('Motion detection', frame)
             cv2.waitKey(1)
 
-    cur_time = datetime.now(timezone.utc)
-
-    if raw_count > 0:
-        cv2.imwrite('{}/bb-{}.jpg'.format(IMAGE_FOLDER, cur_time.strftime('%Y-%m-%d_%H:%M:%S')), frame)
-
     # Release video capture and destroy windows
     cap.release()
     cv2.destroyAllWindows()
 
-    return (raw_count, cur_time)
+    return (raw_count, datetime.now(timezone.utc))
 
 def send_alert(raw_count):
     # TODO: send email
