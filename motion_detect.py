@@ -1,22 +1,31 @@
 import sys
 import cv2
+import logging
+import smtplib
+from email.message import EmailMessage
 
 from datetime import datetime, timedelta, timezone
 from time import sleep
 
-SCAN_INTERVAL_SECS = 10
-ALERT_INTERVAL_SECS = 11
+EMAIL_SERVER = ''
+SENDER = ''
+RECIPENT = ''
+
+ALERT_INTERVAL_SECS = 1800
 
 # SHOW_UI = True
 SHOW_UI = False
 
 LOOP_PER_SCAN = 200
-IGNORE_INITIAL_LOOPS = 40
+IGNORE_INITIAL_LOOPS = 20
 
 ROTATE = 0
-COUNT_THRESHOLD = 0.1
+COUNT_THRESHOLD = 0.05
 
-IMAGE_FOLDER = 'var'
+LAST_ALERT_PATH = '/home/bb/Git-Repos/bb/var/zz.txt'
+IMAGE_FOLDER = '/home/bb/Git-Repos/bb/var'
+
+SAVE_ANYWAY = False
 
 cv_rotate = None
 if ROTATE == 90:
@@ -25,8 +34,6 @@ elif ROTATE == 180:
     cv_rotate = cv2.ROTATE_180
 elif ROTATE == 270:
     cv_rotate = cv2.ROTATE_90_COUNTERCLOCKWISE
-
-detection_threshold = (LOOP_PER_SCAN - IGNORE_INITIAL_LOOPS) * COUNT_THRESHOLD
 
 def motion_detect():
     # Initialize video capture
@@ -40,8 +47,6 @@ def motion_detect():
 
     # Loop through frames
     for i in range(LOOP_PER_SCAN):
-        print('Loop {} of {}'.format(i, LOOP_PER_SCAN))
-
         # Capture frame-by-frame
         ret, frame = cap.read()
 
@@ -77,7 +82,11 @@ def motion_detect():
                     if not written:
                         cv2.imwrite('{}/bb-{}.jpg'.format(IMAGE_FOLDER, datetime.now(timezone.utc).strftime('%Y-%m-%d_%H-%M-%S')), frame)
                         written = True
-        
+
+        if SAVE_ANYWAY and not written:
+            cv2.imwrite('{}/bb-{}.jpg'.format(IMAGE_FOLDER, datetime.now(timezone.utc).strftime('%Y-%m-%d_%H-%M-%S')), frame)
+            written = True
+
         # Display the resulting frame
         if SHOW_UI:
             cv2.imshow('Motion detection', frame)
@@ -90,20 +99,72 @@ def motion_detect():
     return (raw_count, datetime.now(timezone.utc))
 
 def send_alert(raw_count):
-    # TODO: send email
-    print('Detected motions at {}. Raw count is {}'.format(datetime.now(timezone.utc), raw_count))
+    try:
+        send_email()
+        logging.info('Alert sent')
+    except Exception as e:
+        logging.warning('Failed to send the email alert')
+        logging.warning(e)
 
-# main script starts
+    try:
+        with open(LAST_ALERT_PATH, 'w') as f:
+            f.writelines(datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S%z'))
+    except Exception as e:
+        logging.warning('Failed to write last alert')
+        logging.warning(e)
 
-last_alert = None
+def send_email():
+    msg = EmailMessage()
+    msg.set_content('As captioned')
+    msg['Subject'] = '[Castle]:  Motion detected'
+    msg['From'] = SENDER
+    msg['To'] = RECIPENT
 
-while True:
+    s = smtplib.SMTP(EMAIL_SERVER)
+    s.send_message(msg)
+    s.quit()
+
+
+def config_logger():
+    logging.basicConfig(format='[%(asctime)s][%(levelname)s] - %(message)s',
+                        level=logging.INFO)
+
+def main():
+    config_logger()
+    logging.info('Started')
+
+    detection_threshold = (LOOP_PER_SCAN - IGNORE_INITIAL_LOOPS) * COUNT_THRESHOLD
+
+    first_line = None
+    try:
+        with open(LAST_ALERT_PATH, 'r') as f:
+            first_line = f.readline().strip('\n')
+    except FileNotFoundError:
+        pass
+
+    last_alert = None
+    if first_line is None:
+        logging.info('No previous alert')
+    else:
+        logging.info('Last alert saved: {}'.format(first_line))
+        last_alert = datetime.strptime(first_line, '%Y-%m-%d %H:%M:%S%z')
+
     (raw_count, detection_time) = motion_detect()
-    if raw_count > detection_threshold and (last_alert is None or 
-                                            last_alert + timedelta(seconds=ALERT_INTERVAL_SECS) < datetime.now(timezone.utc)):
-        send_alert(raw_count)
-        last_alert = datetime.now(timezone.utc)
+    if raw_count > 0:
+        if raw_count > detection_threshold:
+            logging.warning('Motion detected. Raw count: {} (EXCEED threshold of {})'.format(raw_count, detection_threshold))
 
-    sleep(SCAN_INTERVAL_SECS)
+            if last_alert is None or last_alert + timedelta(seconds=ALERT_INTERVAL_SECS) < datetime.now(timezone.utc):
+                send_alert(raw_count)
+                last_alert = datetime.now(timezone.utc)
+            else:
+                logging.info('Skipped sending alerts. Alert interval is {} second(s)'.format(ALERT_INTERVAL_SECS))
+        else:
+            logging.warning('Motion detected. Raw count: {} (within threshold of {})'.format(raw_count, detection_threshold))
+    else:
+        logging.info('No motion detected')
 
-sys.exit()
+    exit(0)
+
+if __name__ == '__main__':
+    main()
