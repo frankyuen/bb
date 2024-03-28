@@ -13,8 +13,8 @@ RECIPENT = ''
 
 ALERT_INTERVAL_SECS = 1800
 
-# SHOW_UI = True
-SHOW_UI = False
+SHOW_UI = True
+# SHOW_UI = False
 
 LOOP_PER_SCAN = 200
 IGNORE_INITIAL_LOOPS = 20
@@ -79,11 +79,11 @@ def motion_detect():
                     # Draw bounding box around object
                     cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
 
-                    if not written:
+                    if IMAGE_FOLDER and not written:
                         cv2.imwrite('{}/bb-{}.jpg'.format(IMAGE_FOLDER, datetime.now(timezone.utc).strftime('%Y-%m-%d_%H-%M-%S')), frame)
                         written = True
 
-        if SAVE_ANYWAY and not written:
+        if SAVE_ANYWAY and IMAGE_FOLDER and not written:
             cv2.imwrite('{}/bb-{}.jpg'.format(IMAGE_FOLDER, datetime.now(timezone.utc).strftime('%Y-%m-%d_%H-%M-%S')), frame)
             written = True
 
@@ -99,6 +99,10 @@ def motion_detect():
     return (raw_count, datetime.now(timezone.utc))
 
 def send_alert(raw_count):
+    if not EMAIL_SERVER or not SENDER or not RECIPENT:
+        logging.info('Alert service not configured. No alert sent. This message is informational only, not an error')
+        return
+
     try:
         send_email()
         logging.info('Alert sent')
@@ -106,12 +110,17 @@ def send_alert(raw_count):
         logging.warning('Failed to send the email alert')
         logging.warning(e)
 
+    if not LAST_ALERT_PATH:
+        return
+
     try:
         with open(LAST_ALERT_PATH, 'w') as f:
             f.writelines(datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S%z'))
     except Exception as e:
         logging.warning('Failed to write last alert')
         logging.warning(e)
+
+
 
 def send_email():
     msg = EmailMessage()
@@ -136,6 +145,9 @@ def main():
     detection_threshold = (LOOP_PER_SCAN - IGNORE_INITIAL_LOOPS) * COUNT_THRESHOLD
 
     first_line = None
+    if LAST_ALERT_PATH:
+    	pass # to bypass reading the file
+    	
     try:
         with open(LAST_ALERT_PATH, 'r') as f:
             first_line = f.readline().strip('\n')
