@@ -4,10 +4,12 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 
 [packages]
-opencv-python = "*"
+python-dotenv = ">=1.0,<2.0"
+opencv-python = ">=4.0,<5.0"
 numpy = "*"
 
 [dev-packages]
 
 [requires]
 python_version = "3"
+

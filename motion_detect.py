@@ -3,29 +3,32 @@ import cv2
 import logging
 import smtplib
 from email.message import EmailMessage
+from os import getenv
 
 from datetime import datetime, timedelta, timezone
 from time import sleep
+from dotenv import load_dotenv
 
-EMAIL_SERVER = ''
-SENDER = ''
-RECIPENT = ''
+load_dotenv()
 
-ALERT_INTERVAL_SECS = 1800
+EMAIL_SERVER = getenv('EMAIL_SERVER')
+SENDER = getenv('SENDER')
+RECIPENT = getenv('RECIPENT')
 
-SHOW_UI = True
-# SHOW_UI = False
+ALERT_INTERVAL_SECS = 1800 if getenv('ALERT_INTERVAL_SECS') is None else int(getenv('ALERT_INTERVAL_SECS'))
 
-LOOP_PER_SCAN = 200
-IGNORE_INITIAL_LOOPS = 20
+SHOW_UI = getenv('SHOW_UI') == 'True'
 
-ROTATE = 0
-COUNT_THRESHOLD = 0.05
+LOOP_PER_SCAN = 400 if getenv('LOOP_PER_SCAN') is None else int(getenv('LOOP_PER_SCAN'))
+IGNORE_INITIAL_LOOPS = 20 if getenv('IGNORE_INITIAL_LOOPS') is None else int(getenv('IGNORE_INITIAL_LOOPS'))
 
-LAST_ALERT_PATH = '/home/bb/Git-Repos/bb/var/zz.txt'
-IMAGE_FOLDER = '/home/bb/Git-Repos/bb/var'
+ROTATE = 0 if getenv('ROTATE') is None else int(getenv('ROTATE'))
+COUNT_THRESHOLD = 0.05 if getenv('COUNT_THRESHOLD') is None else float(getenv('COUNT_THRESHOLD'))
 
-SAVE_ANYWAY = False
+LAST_ALERT_PATH = getenv('LAST_ALERT_PATH')
+IMAGE_FOLDER = getenv('IMAGE_FOLDER')
+
+SAVE_ANYWAY = getenv('SAVE_ANYWAY') == 'True'
 
 cv_rotate = None
 if ROTATE == 90:
@@ -145,8 +148,6 @@ def main():
     detection_threshold = (LOOP_PER_SCAN - IGNORE_INITIAL_LOOPS) * COUNT_THRESHOLD
 
     first_line = None
-    if LAST_ALERT_PATH:
-    	pass # to bypass reading the file
     	
     try:
         with open(LAST_ALERT_PATH, 'r') as f:
@@ -156,7 +157,7 @@ def main():
 
     last_alert = None
     if first_line is None:
-        logging.info('No previous alert')
+        logging.info('No previous alert found')
     else:
         logging.info('Last alert saved: {}'.format(first_line))
         last_alert = datetime.strptime(first_line, '%Y-%m-%d %H:%M:%S%z')
@@ -180,3 +181,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
