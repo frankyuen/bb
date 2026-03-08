@@ -1,0 +1,11 @@
+{
+  "privacy": {
+    "usageStatisticsEnabled": false
+  },
+  "context": {
+    "fileName": ["AGENT.md", "GEMINI.md"]
+  },
+  "experimental": {
+    "plan": true
+  }
+}
