@@ -1,0 +1,35 @@
+{
+  "root": true,
+  "env": {
+    "node": true,
+    "es6": true
+  },
+
+  // see:
+  // https://prettier.io/docs/en/integrating-with-linters.html, and
+  // https://blog.theodo.com/2019/08/empower-your-dev-environment-with-eslint-prettier-and-editorconfig-with-no-conflicts/
+  "plugins": ["prettier"],
+
+  // it appears the ESLint extension fails to load plugins in certain complex
+  // directory/workspace structure, https://github.com/microsoft/vscode-eslint/issues/696,
+  // as a workaround, instead of extending `prettier` here in root workspace, do it
+  // in individual sub-workspace
+  "extends": ["eslint:recommended", "prettier"],
+
+  "parserOptions": {
+    "ecmaVersion": 2021,
+    "ecmaFeatures": { "impliedStrict": true }
+  },
+  "rules": {
+    "prettier/prettier": "error",
+    // Below are code quality rules and do not conflict with prettier
+    "no-inline-comments": "warn",
+    "no-console": ["warn", { "allow": ["warn", "error"] }],
+    "eqeqeq": ["warn", "always"],
+    "no-empty-function": "warn",
+    "no-eval": "warn",
+    "no-implied-eval": "warn",
+    "consistent-return": "warn",
+    "camelcase": "warn"
+  }
+}

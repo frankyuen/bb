@@ -1,0 +1,48 @@
+import argparse
+from os import getenv
+from dotenv import load_dotenv
+import logging
+
+
+def config_logger():
+    logging.basicConfig(
+        format="[%(asctime)s][%(levelname)s] - %(message)s", level=logging.INFO
+    )
+
+
+def main():
+    config_logger()
+
+    load_dotenv()
+
+    parser = argparse.ArgumentParser(description="Garden BB")
+    parser.add_argument(
+        "--mode",
+        choices=["live", "monitor"],
+        required=True,
+        help="Operating mode",
+    )
+    args = parser.parse_args()
+
+    if args.mode == "live":
+        port = int(getenv("STREAM_PORT", "8080"))
+        from streamer import WebcamStreamer
+        from server import run_server
+
+        streamer = WebcamStreamer()
+        streamer.start()
+        logging.info("*** Live stream started on http://0.0.0.0:%s ***", port)
+        try:
+            run_server(streamer, port)
+        except KeyboardInterrupt:
+            pass
+        finally:
+            streamer.stop()
+            logging.info("Streamer stopped")
+
+    elif args.mode == "monitor":
+        logging.info("Monitor mode is not yet implemented.")
+
+
+if __name__ == "__main__":
+    main()
