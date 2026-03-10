@@ -1,3 +1,8 @@
+"""Flask HTTP server for the live webcam stream.
+
+Serves a minimal viewer page at '/' and an MJPEG stream at '/stream'.
+"""
+
 import time
 from flask import Flask, Response
 
@@ -7,8 +12,10 @@ _streamer = None
 _VIEWER_HTML = """<!DOCTYPE html>
 <html>
 <head><title>Live Stream</title></head>
-<body style="margin:0;background:#000;display:flex;justify-content:center;align-items:center;height:100vh;">
-  <img src="/stream" style="max-width:100%;max-height:100vh;">
+<body style="margin:0;background:#000;">
+  <!-- object-fit:contain scales the image to fill the viewport as large as
+       possible while preserving the aspect ratio, without cropping. -->
+  <img src="/stream" style="width:100vw;height:100vh;object-fit:contain;display:block;">
 </body>
 </html>"""
 
@@ -29,10 +36,7 @@ def _generate():
         if frame is None:
             time.sleep(0.01)
             continue
-        yield (
-            b"--frame\r\n"
-            b"Content-Type: image/jpeg\r\n\r\n" + frame + b"\r\n"
-        )
+        yield (b"--frame\r\n" b"Content-Type: image/jpeg\r\n\r\n" + frame + b"\r\n")
 
 
 def run_server(streamer, port):
