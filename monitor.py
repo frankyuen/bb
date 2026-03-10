@@ -63,23 +63,27 @@ def scan_frames() -> tuple[bool, list]:
                 continue
 
             frames.append(frame)
-            curr_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-            if prev_gray is not None:
-                # Pixel-wise absolute difference between consecutive frames
-                diff = cv2.absdiff(prev_gray, curr_gray)
+            # Skip detection once motion is confirmed; frames are still collected for the snapshot
+            if not motion_detected:
+                curr_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-                # Threshold at 25: changes smaller than ~10% intensity are ignored
-                th = cv2.threshold(diff, 25, 255, cv2.THRESH_BINARY)[1]
-                contours, _ = cv2.findContours(
-                    th, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
-                )
+                if prev_gray is not None:
+                    # Pixel-wise absolute difference between consecutive frames
+                    diff = cv2.absdiff(prev_gray, curr_gray)
 
-                # Any contour exceeding NOISE_THRESHOLD area is real motion; smaller ones are noise
-                if any(cv2.contourArea(c) > NOISE_THRESHOLD for c in contours):
-                    motion_detected = True
+                    # Threshold at 25: changes smaller than ~10% intensity are ignored
+                    th = cv2.threshold(diff, 25, 255, cv2.THRESH_BINARY)[1]
+                    contours, _ = cv2.findContours(
+                        th, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
+                    )
 
-            prev_gray = curr_gray
+                    # Any contour exceeding NOISE_THRESHOLD area is real motion;
+                    #  smaller ones are noise
+                    if any(cv2.contourArea(c) > NOISE_THRESHOLD for c in contours):
+                        motion_detected = True
+
+                prev_gray = curr_gray
     finally:
         # Always release the camera to avoid device lock
         cap.release()
