@@ -54,4 +54,5 @@ The app should be designed to start in one of the two modes, controlled by passi
   - if either any motion above the threshold is detected, or if an env var `SAVE_SNAPSHOT` is set, save the middle frame as a `.jpg` file with the filename as evaluated to `datetime.now(timezone.utc).strftime("%Y-%m-%d_%H-%M-%S")` in a directory configurable by an env var `IMAGE_DIR`
   - unconditionally release the camera
   - sleep for a duration configurable in an env var `SCAN_INTERVAL_SECS` with an integer value
-  - then repeat the monitoring logic
+  - then repeat the monitoring logic, unless the `--run-once-only` command line option is specified
+- If the `--run-once-only` command line option is specified, the monitoring logic will run just one iteration
