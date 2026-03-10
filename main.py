@@ -1,3 +1,10 @@
+"""
+Entry point for Garden BB. Start the app in one of two modes:
+
+  pipenv run python main.py --mode live     # HTTP live webcam stream
+  pipenv run python main.py --mode monitor  # Motion detection monitor
+"""
+
 import argparse
 from os import getenv
 from dotenv import load_dotenv
@@ -41,7 +48,14 @@ def main():
             logging.info("Streamer stopped")
 
     elif args.mode == "monitor":
-        logging.info("Monitor mode is not yet implemented.")
+        from monitor import run_monitor
+
+        try:
+            run_monitor()
+        except KeyboardInterrupt:
+            pass
+        finally:
+            logging.info("Monitor stopped")
 
 
 if __name__ == "__main__":
