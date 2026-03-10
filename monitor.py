@@ -151,12 +151,13 @@ def save_snapshot(frames: list) -> None:
         logging.warning("cv2.imwrite failed for path: %s", path)
 
 
-def run_monitor() -> None:
+def run_monitor(run_once: bool = False) -> None:
     """
     Main monitor loop. Continuously scans for motion, fires alerts on detection,
-    and optionally saves snapshots. Runs indefinitely until interrupted.
+    and optionally saves snapshots. Runs indefinitely until interrupted, unless
+    run_once is True in which case it exits after a single scan cycle.
     """
-    logging.info("Monitor mode started")
+    logging.info("Monitor mode started%s", " (run-once)" if run_once else "")
 
     while True:
         logging.info("Starting scan (%d frames) ...", LOOP_PER_SCAN)
@@ -171,6 +172,9 @@ def run_monitor() -> None:
 
         if motion_detected or SAVE_SNAPSHOT:
             save_snapshot(frames)
+
+        if run_once:
+            break
 
         logging.info("Sleeping for %d seconds ...", SCAN_INTERVAL_SECS)
         time.sleep(SCAN_INTERVAL_SECS)

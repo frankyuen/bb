@@ -29,6 +29,11 @@ def main():
         required=True,
         help="Operating mode",
     )
+    parser.add_argument(
+        "--run-once-only",
+        action="store_true",
+        help="(monitor mode) run a single scan cycle then exit",
+    )
     args = parser.parse_args()
 
     if args.mode == "live":
@@ -51,7 +56,7 @@ def main():
         from monitor import run_monitor
 
         try:
-            run_monitor()
+            run_monitor(run_once=args.run_once_only)
         except KeyboardInterrupt:
             pass
         finally:
