@@ -34,6 +34,9 @@ IMAGE_DIR = getenv("IMAGE_DIR")
 # Seconds to sleep between scan cycles
 SCAN_INTERVAL_SECS = int(getenv("SCAN_INTERVAL_SECS", "60"))
 
+IMAGE_WIDTH = int(getenv("IMAGE_WIDTH", "1280"))
+IMAGE_HEIGHT = int(getenv("IMAGE_HEIGHT", "720"))
+
 
 def scan_frames() -> tuple[bool, list]:
     """
@@ -50,6 +53,17 @@ def scan_frames() -> tuple[bool, list]:
     if not cap.isOpened():
         logging.error("Cannot open camera")
         return False, []
+
+    # Set resolution
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, IMAGE_WIDTH)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, IMAGE_HEIGHT)
+
+    # If the set resolution exceeds the camera max, it will fallback
+    # to the max resolution the camera is capable of
+    max_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    max_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+
+    logging.info("Working resolution: %d x %d", max_width, max_height)
 
     frames = []
     motion_detected = False

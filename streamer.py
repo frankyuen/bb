@@ -1,7 +1,10 @@
 import threading
 from os import getenv
+import logging
 import cv2
 
+IMAGE_WIDTH = int(getenv("IMAGE_WIDTH", "1280"))
+IMAGE_HEIGHT = int(getenv("IMAGE_HEIGHT", "720"))
 
 frame_moving_object = bool(getenv("FRAME_MOVING_OBJECT", ""))
 
@@ -36,6 +39,18 @@ class WebcamStreamer:
         self._cap = cv2.VideoCapture(self._webcam_index)
         if not self._cap.isOpened():
             raise RuntimeError(f"Cannot open webcam at index {self._webcam_index}")
+
+        # Set resolution
+        self._cap.set(cv2.CAP_PROP_FRAME_WIDTH, IMAGE_WIDTH)
+        self._cap.set(cv2.CAP_PROP_FRAME_HEIGHT, IMAGE_HEIGHT)
+
+        # If the set resolution exceeds the camera max, it will fallback
+        # to the max resolution the camera is capable of
+        max_width = int(self._cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        max_height = int(self._cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+
+        logging.info("Working resolution: %d x %d", max_width, max_height)
+
         self._running = True
         self._thread = threading.Thread(target=self._capture_loop, daemon=True)
         self._thread.start()
