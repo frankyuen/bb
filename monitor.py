@@ -38,7 +38,7 @@ IMAGE_WIDTH = int(getenv("IMAGE_WIDTH", "1280"))
 IMAGE_HEIGHT = int(getenv("IMAGE_HEIGHT", "720"))
 
 
-def scan_frames() -> tuple[bool, list]:
+def scan_frames() -> tuple[bool, cv2.typing.MatLike | None]:
     """
     Open the camera, capture LOOP_PER_SCAN frames, and detect motion using
     frame differencing: the absolute pixel difference between consecutive frames
@@ -46,13 +46,17 @@ def scan_frames() -> tuple[bool, list]:
     NOISE_THRESHOLD in area — anything smaller is treated as noise.
     The camera is unconditionally released before returning.
 
+    On motion, bounding rectangles are drawn in-place on the frame where motion
+    was first detected; that annotated frame is returned as the snapshot.
+    When no motion is detected, the last captured frame is returned for SAVE_SNAPSHOT use.
+
     Returns:
-        (motion_detected, frames): whether motion was found, and all captured frames.
+        (motion_detected, snapshot_frame): detection result and the frame to save.
     """
     cap = cv2.VideoCapture(0)
     if not cap.isOpened():
         logging.error("Cannot open camera")
-        return False, []
+        return False, None
 
     # Set resolution
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, IMAGE_WIDTH)
@@ -65,7 +69,8 @@ def scan_frames() -> tuple[bool, list]:
 
     logging.info("Working resolution: %d x %d", max_width, max_height)
 
-    frames = []
+    last_frame = None  # fallback snapshot for SAVE_SNAPSHOT without motion
+    motion_frame = None  # annotated frame where motion was first detected
     motion_detected = False
     prev_gray = None
 
@@ -76,33 +81,37 @@ def scan_frames() -> tuple[bool, list]:
                 logging.warning("Failed to capture frame %d — skipping", i)
                 continue
 
-            frames.append(frame)
+            last_frame = frame
+            curr_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-            # Skip detection once motion is confirmed; frames are still collected for the snapshot
-            if not motion_detected:
-                curr_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            if prev_gray is not None:
+                # Pixel-wise absolute difference between consecutive frames
+                diff = cv2.absdiff(prev_gray, curr_gray)
 
-                if prev_gray is not None:
-                    # Pixel-wise absolute difference between consecutive frames
-                    diff = cv2.absdiff(prev_gray, curr_gray)
+                # Threshold at 25: changes smaller than ~10% intensity are ignored
+                th = cv2.threshold(diff, 25, 255, cv2.THRESH_BINARY)[1]
+                contours, _ = cv2.findContours(
+                    th, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
+                )
 
-                    # Threshold at 25: changes smaller than ~10% intensity are ignored
-                    th = cv2.threshold(diff, 25, 255, cv2.THRESH_BINARY)[1]
-                    contours, _ = cv2.findContours(
-                        th, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
-                    )
-
-                    # Any contour exceeding NOISE_THRESHOLD area is real motion;
-                    #  smaller ones are noise
-                    if any(cv2.contourArea(c) > NOISE_THRESHOLD for c in contours):
+                for c in contours:
+                    if cv2.contourArea(c) > NOISE_THRESHOLD:
+                        # Annotate the motion area in-place; frame is not copied
+                        x, y, w, h = cv2.boundingRect(c)
+                        cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
                         motion_detected = True
 
-                prev_gray = curr_gray
+                if motion_detected:
+                    motion_frame = frame
+                    break  # snapshot captured; no need to read further frames
+
+            prev_gray = curr_gray
     finally:
         # Always release the camera to avoid device lock
         cap.release()
 
-    return motion_detected, frames
+    snapshot_frame = motion_frame if motion_detected else last_frame
+    return motion_detected, snapshot_frame
 
 
 def alert_control() -> None:
@@ -142,23 +151,22 @@ def alert_control() -> None:
     _append_alert_time()
 
 
-def save_snapshot(frames: list) -> None:
+def save_snapshot(frame: cv2.typing.MatLike | None) -> None:
     """
-    Save the middle frame from the captured sequence as a JPEG file in IMAGE_DIR.
+    Save a single frame as a JPEG file in IMAGE_DIR.
     The filename is the UTC timestamp at the time of saving.
     """
     if not IMAGE_DIR:
         logging.warning("Snapshot requested but IMAGE_DIR is not configured")
         return
-    if not frames:
-        logging.warning("No frames captured; cannot save snapshot")
+    if frame is None:
+        logging.warning("No frame available; cannot save snapshot")
         return
 
-    mid_frame = frames[len(frames) // 2]
     filename = datetime.now(timezone.utc).strftime("%Y-%m-%d_%H-%M-%S") + ".jpg"
     path = os.path.join(IMAGE_DIR, filename)
 
-    ok = cv2.imwrite(path, mid_frame)
+    ok = cv2.imwrite(path, frame)
     if ok:
         logging.info("Snapshot saved: %s", path)
     else:
@@ -175,7 +183,7 @@ def run_monitor(run_once: bool = False) -> None:
 
     while True:
         logging.info("Starting scan (%d frames) ...", LOOP_PER_SCAN)
-        motion_detected, frames = scan_frames()
+        motion_detected, snapshot_frame = scan_frames()
 
         logging.info(
             "Scan complete — motion: %s", "DETECTED" if motion_detected else "clear"
@@ -185,7 +193,7 @@ def run_monitor(run_once: bool = False) -> None:
             alert_control()
 
         if motion_detected or SAVE_SNAPSHOT:
-            save_snapshot(frames)
+            save_snapshot(snapshot_frame)
 
         if run_once:
             break

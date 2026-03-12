@@ -51,8 +51,8 @@ The app should be designed to start in one of the two modes, controlled by passi
     - read the last line of a local file, with the path configurable in an env var `ALERT_FILE_PATH`. Each line of the file is the time in ISO 8601 when the monitor logic was run. Reading the last line will get the most recent execution time of the monitor logic
     - only if the time delta between the system time and the last execution time exceeds a configurable threshold in seconds (env var `ALERT_INTERVAL_SECS` with an integer value), send an email alert by using the module `emailer.py`. `subject_text` should be the string "Motion detected" and `body_text` should be a summary text of the detected motion
     - unconditionally append a line to that local file with the system time in ISO 8601 format
-  - if either any motion above the threshold is detected, or if an env var `SAVE_SNAPSHOT` is set, save the middle frame as a `.jpg` file with the filename as evaluated to `datetime.now(timezone.utc).strftime("%Y-%m-%d_%H-%M-%S")` in a directory configurable by an env var `IMAGE_DIR`
+  - in a cycle, if any motion above the threshold is detected, save the frame as a `.jpg` file; if no motion is detected and the env var `SAVE_SNAPSHOT` is set, save the last frame captured in the cycle. The `.jpg` file should be named to the evaluated value of `datetime.now(timezone.utc).strftime("%Y-%m-%d_%H-%M-%S")` and saved in a directory configurable by an env var `IMAGE_DIR`
   - unconditionally release the camera
-  - sleep for a duration configurable in an env var `SCAN_INTERVAL_SECS` with an integer value
-  - then repeat the monitoring logic, unless the `--run-once-only` command line option is specified
+  - if the monitor is not running with the `--run-once-only` command line option:
+    - sleep for a duration configurable in an env var `SCAN_INTERVAL_SECS` with an integer value, then repeat the monitoring logic
 - If the `--run-once-only` command line option is specified, the monitoring logic will run just one iteration
