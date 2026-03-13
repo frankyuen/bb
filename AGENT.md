@@ -5,7 +5,3 @@ This file provides guidance to all AI agents when working with code in this repo
 ## Project information
 
 @PROJECT.md
-
-## Workflow Information
-
-@AGENT-WORKFLOW.md
