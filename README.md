@@ -7,7 +7,7 @@ A hobbyist webcam monitor for home use - best when you're on vacation or you lea
 ## About
 
 - A simple, **hobbyist-grade** home security tool — not production software
-- Runs on a **Raspberry Pi 4** connected to a USB webcam
+- It's lightweight - readily runs on a **Raspberry Pi 4** connected to a USB webcam
 - Serves a live video stream and detects motion, saving snapshots and sending email alerts
 - **Privacy first:** no cloud dependency, no third-party services — everything stays local
 - Intended for **home use only**, best run behind a firewall or accessed through a VPN
@@ -112,11 +112,18 @@ pipenv run python main.py --mode monitor --run-once-only
 
 ## Hardware
 
-- Raspberry Pi 4 Model B (8 GB RAM recommended)
+The app has been tested to run on the following hardware:
+
+- Raspberry Pi 4 Model B
+- Memory requirement:
+  - **live streaming** mode: ~200 MB if moving objects are framed, ~100 MB if not
+  - **monitor** mode: ~100 MB
 - USB webcam (or any V4L2-compatible camera at `/dev/video0`)
-- 50+ GB free disk space for snapshot storage
+- Storage for snapshots: varied, and depends on how the app is configured to use
 
 ## Software
+
+The app uses or has been tested to run with the following software:
 
 - Raspberry Pi OS (Debian 12)
 - Python 3.11+
