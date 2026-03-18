@@ -1,4 +1,4 @@
-# Garden BB
+# Big Brother - BB
 
 A hobbyist webcam monitor for home use.
 
