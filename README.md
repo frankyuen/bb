@@ -1,6 +1,6 @@
 # Big Brother - BB
 
-A hobbyist webcam monitor for home use.
+A hobbyist webcam monitor for home use - best when you're on vacation or you leave home for an extended period of time in a day
 
 ---
 
@@ -17,6 +17,13 @@ A hobbyist webcam monitor for home use.
 ---
 
 ## Features
+
+You run this thing in either of two modes:
+
+- **Live Streaming Mode**
+- **Monitor Mode**
+
+Usually you run it in Monitor Mode, and if you got an alert notification, you access the machine (via a secure tunnel like VPN and SSH), review the captured images, or run the Live Streaming and view it in a web browser
 
 ### Live Streaming Mode
 
