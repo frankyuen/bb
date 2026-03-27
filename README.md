@@ -85,19 +85,19 @@ RECIPIENT=recipient@example.com
 **Live streaming mode** — serves the webcam stream over HTTP:
 
 ```bash
-uv run python main.py --mode live
+uv run main.py --mode live
 ```
 
 **Monitor mode** — continuous motion detection loop:
 
 ```bash
-uv run python main.py --mode monitor
+uv run main.py --mode monitor
 ```
 
 **Monitor mode, single scan** — run one cycle and exit (suitable for cron):
 
 ```bash
-uv run python main.py --mode monitor --run-once-only
+uv run main.py --mode monitor --run-once-only
 ```
 
 ### Command-line options
