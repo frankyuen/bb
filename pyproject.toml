@@ -1,0 +1,11 @@
+[project]
+name = "bb"
+version = "1.0.0"
+description = "Big Brother - A hobbyist webcam monitor for home use"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "flask>=3.1",
+    "opencv-python-headless>=4.13",
+    "python-dotenv>=1.2"
+]
