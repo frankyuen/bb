@@ -52,7 +52,7 @@ Usually you run it in Monitor Mode, and if you got an alert notification, you ac
 ### 1. Install dependencies
 
 ```bash
-pipenv install
+uv sync
 ```
 
 ### 2. Configure environment
@@ -85,19 +85,19 @@ RECIPIENT=recipient@example.com
 **Live streaming mode** — serves the webcam stream over HTTP:
 
 ```bash
-pipenv run python main.py --mode live
+uv run python main.py --mode live
 ```
 
 **Monitor mode** — continuous motion detection loop:
 
 ```bash
-pipenv run python main.py --mode monitor
+uv run python main.py --mode monitor
 ```
 
 **Monitor mode, single scan** — run one cycle and exit (suitable for cron):
 
 ```bash
-pipenv run python main.py --mode monitor --run-once-only
+uv run python main.py --mode monitor --run-once-only
 ```
 
 ### Command-line options
@@ -127,5 +127,5 @@ The app uses or has been tested to run with the following software:
 
 - Raspberry Pi OS (Debian 12)
 - Python 3.11+
-- `pipenv` for dependency management
+- `uv` for dependency management
 - `opencv-python-headless` (headless, no GUI required)
